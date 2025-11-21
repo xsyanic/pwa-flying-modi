@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flying Modi</title>
+    <meta name="theme-color" content="#1E90FF">
+    <meta name="description" content="A fun Flappy Bird clone - Fly through pipes and beat your high score!">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="bird.png">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(to bottom, #87CEEB, #1E90FF);
+            font-family: 'Arial Rounded MT Bold', 'Arial', sans-serif;
+            overflow: hidden;
+        }
+
+        #loading-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, #1E90FF, #87CEEB);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        #loading-title {
+            font-size: 36px;
+            margin-bottom: 30px;
+            color: #f1c40f;
+            text-align: center;
+        }
+
+        #loading-container {
+            width: 80%;
+            max-width: 300px;
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            padding: 3px;
+            margin-bottom: 20px;
+        }
+
+        #loading-bar {
+            height: 20px;
+            background: linear-gradient(to right, #f1c40f, #f39c12);
+            border-radius: 8px;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        #loading-text {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        #loading-details {
+            font-size: 14px;
+            margin-top: 10px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        #game-container {
+            position: relative;
+            width: 100%;
+            max-width: 360px;
+            height: 640px;
+            background-image: url('bg.webp');
+            background-size: cover;
+            background-position: center;
+            overflow: hidden;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+            display: none; /* Hidden until loading complete */
+        }
+
+        #bird {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background-image: url('bird.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            z-index: 10;
+            transition: transform 0.1s;
+        }
+
+        .pipe {
+            position: absolute;
+            width: 60px;
+            z-index: 5;
+        }
+
+        .pipe-top {
+            top: 0;
+            background-image: url('pipe.webp');
+            background-size: 100% 100%;
+            transform: rotate(180deg);
+        }
+
+        .pipe-bottom {
+            bottom: 0;
+            background-image: url('pipe.webp');
+            background-size: 100% 100%;
+        }
+
+        #score {
+            position: absolute;
+            top: 20px;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            font-size: 40px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            z-index: 15;
+        }
+
+        #high-score {
+            position: absolute;
+            top: 70px;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            font-size: 16px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            z-index: 15;
+        }
+
+        #game-message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            z-index: 20;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 25px;
+            border-radius: 15px;
+            width: 80%;
+            max-width: 300px;
+        }
+
+        #game-message h1 {
+            font-size: 36px;
+            margin-bottom: 15px;
+            color: #f1c40f;
+        }
+
+        #game-message p {
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+
+        #start-button, #restart-button {
+            background-color: #f1c40f;
+            color: #2c3e50;
+            border: none;
+            padding: 12px 30px;
+            font-size: 20px;
+            font-weight: bold;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #d35400;
+            transition: all 0.1s;
+            margin-top: 10px;
+        }
+
+        #start-button:hover, #restart-button:hover {
+            background-color: #f39c12;
+        }
+
+        #start-button:active, #restart-button:active {
+            transform: translateY(4px);
+            box-shadow: 0 0 0 #d35400;
+        }
+
+        #ground {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 50px;
+            background: linear-gradient(to bottom, #8B4513, #654321);
+            z-index: 8;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .medal {
+            display: inline-block;
+            margin-left: 10px;
+            font-size: 20px;
+        }
+
+        .gold { color: gold; }
+        .silver { color: silver; }
+        .bronze { color: #cd7f32; }
+
+        #install-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: rgba(255, 255, 255, 0.2);
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            z-index: 25;
+            display: none;
+        }
+
+        #online-status {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: #2ecc71;
+            z-index: 25;
+            display: none;
+        }
+
+        #online-status.offline {
+            background-color: #e74c3c;
+        }
+
+        @media (max-width: 480px) {
+            #game-container {
+                width: 100vw;
+                height: 100vh;
+                max-width: none;
+                border-radius: 0;
+            }
+            
+            #game-message {
+                width: 90%;
+                padding: 20px;
+            }
+            
+            #game-message h1 {
+                font-size: 32px;
+            }
+            
+            #loading-title {
+                font-size: 28px;
+            }
+        }
+
+        /* PWA specific styles */
+        @media all and (display-mode: standalone) {
+            body {
+                padding: 0;
+            }
+            
+            #game-container {
+                border-radius: 0;
+                max-width: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="loading-screen">
+        <h1 id="loading-title">Flying Modi</h1>
+        <p id="loading-text">0%</p>
+        <div id="loading-container">
+            <div id="loading-bar"></div>
+        </div>
+        <p id="loading-details">Preparing game assets...</p>
+    </div>
+    
+    <div id="game-container">
+        <button id="install-button" title="Install App">⬇️</button>
+        <div id="online-status" title="Online"></div>
+        <div id="bird"></div>
+        <div id="score">0</div>
+        <div id="high-score">High Score: 0</div>
+        <div id="game-message">
+            <h1>Flying Modi</h1>
+            <p>Tap or click to fly!</p>
+            <p>Avoid the pipes and try to beat your high score!</p>
+            <button id="start-button">Start Game</button>
+        </div>
+        <div id="ground"></div>
+    </div>
+
+    <script>
+        // Game variables - BALANCED VALUES
+        let gameStarted = false;
+        let gameOver = false;
+        let score = 0;
+        let highScore = 0;
+        let frames = 0;
+        let pipeGap = 200; // Increased from 150 to 200 for easier passage
+        let pipeInterval = 110; // Slightly increased to reduce pipe frequency
+        let gravity = 0.4; // Reduced from 0.5 for smoother falling
+        let birdVelocity = 0;
+        let birdJump = -7; // Reduced from -10 to -7 for less jump height
+        let pipes = [];
+        let pipePairs = []; // Track pipe pairs for scoring
+        
+        // Asset loading variables
+        let assetsLoaded = 0;
+        let totalAssets = 0;
+        let loadingComplete = false;
+
+        // PWA variables
+        let deferredPrompt;
+        let isOnline = navigator.onLine;
+
+        // DOM elements
+        const loadingScreen = document.getElementById('loading-screen');
+        const loadingBar = document.getElementById('loading-bar');
+        const loadingText = document.getElementById('loading-text');
+        const loadingDetails = document.getElementById('loading-details');
+        const gameContainer = document.getElementById('game-container');
+        const bird = document.getElementById('bird');
+        const scoreDisplay = document.getElementById('score');
+        const highScoreDisplay = document.getElementById('high-score');
+        const gameMessage = document.getElementById('game-message');
+        const startButton = document.getElementById('start-button');
+        const ground = document.getElementById('ground');
+        const installButton = document.getElementById('install-button');
+        const onlineStatus = document.getElementById('online-status');
+
+        // Audio elements
+        const flapSound = new Audio();
+        const gameOverSound = new Audio();
+        const backgroundMusic = new Audio();
+        
+        // Set audio properties
+        backgroundMusic.loop = true;
+        backgroundMusic.volume = 0.5;
+        flapSound.volume = 0.7;
+        gameOverSound.volume = 0.7;
+
+        // Asset URLs - using local files
+        const assetUrls = [
+            'bird.png',
+            'pipe.webp',
+            'bg.webp',
+            'fly.mp3',
+            'gameover.mp3',
+            'music.mp3'
+        ];
+
+        // Asset names for display
+        const assetNames = {
+            'bird.png': 'Bird Image',
+            'pipe.webp': 'Pipe Image',
+            'bg.webp': 'Background Image',
+            'fly.mp3': 'Flap Sound',
+            'gameover.mp3': 'Game Over Sound',
+            'music.mp3': 'Background Music'
+        };
+
+        // PWA Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(registration => {
+                        console.log('SW registered: ', registration);
+                    })
+                    .catch(registrationError => {
+                        console.log('SW registration failed: ', registrationError);
+                    });
+            });
+        }
+
+        // PWA Install Prompt
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            installButton.style.display = 'block';
+            
+            installButton.addEventListener('click', () => {
+                installButton.style.display = 'none';
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('User accepted the install prompt');
+                    } else {
+                        console.log('User dismissed the install prompt');
+                    }
+                    deferredPrompt = null;
+                });
+            });
+        });
+
+        // Online/Offline status
+        window.addEventListener('online', updateOnlineStatus);
+        window.addEventListener('offline', updateOnlineStatus);
+
+        function updateOnlineStatus() {
+            isOnline = navigator.onLine;
+            onlineStatus.style.display = 'block';
+            if (isOnline) {
+                onlineStatus.classList.remove('offline');
+                onlineStatus.title = 'Online';
+            } else {
+                onlineStatus.classList.add('offline');
+                onlineStatus.title = 'Offline';
+            }
+        }
+
+        // Cookie functions for high score storage
+        function setCookie(name, value, days) {
+            let expires = "";
+            if (days) {
+                const date = new Date();
+                date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+                expires = "; expires=" + date.toUTCString();
+            }
+            document.cookie = name + "=" + (value || "") + expires + "; path=/";
+        }
+
+        function getCookie(name) {
+            const nameEQ = name + "=";
+            const ca = document.cookie.split(';');
+            for(let i = 0; i < ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+                if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+            }
+            return null;
+        }
+
+        // Asset loading functions
+        function loadAssets() {
+            totalAssets = assetUrls.length;
+            
+            assetUrls.forEach(url => {
+                if (url.match(/\.(mp3|wav|ogg)$/)) {
+                    // Load audio
+                    const audio = new Audio();
+                    audio.addEventListener('canplaythrough', () => assetLoaded(url), false);
+                    audio.addEventListener('error', () => assetError(url), false);
+                    audio.src = url;
+                    
+                    // Assign to correct variable
+                    if (url.includes('fly.mp3')) {
+                        flapSound.src = url;
+                    } else if (url.includes('gameover.mp3')) {
+                        gameOverSound.src = url;
+                    } else if (url.includes('music.mp3')) {
+                        backgroundMusic.src = url;
+                    }
+                } else {
+                    // Load image
+                    const img = new Image();
+                    img.addEventListener('load', () => assetLoaded(url), false);
+                    img.addEventListener('error', () => assetError(url), false);
+                    img.src = url;
+                }
+            });
+        }
+
+        function assetLoaded(url) {
+            assetsLoaded++;
+            const progress = Math.round((assetsLoaded / totalAssets) * 100);
+            loadingBar.style.width = `${progress}%`;
+            loadingText.textContent = `${progress}%`;
+            loadingDetails.textContent = `Loaded: ${assetNames[url]}`;
+            
+            if (assetsLoaded === totalAssets) {
+                loadingComplete = true;
+                setTimeout(showGame, 1000); // Show game after a brief delay
+            }
+        }
+
+        function assetError(url) {
+            console.error(`Failed to load asset: ${url}`);
+            assetsLoaded++;
+            const progress = Math.round((assetsLoaded / totalAssets) * 100);
+            loadingBar.style.width = `${progress}%`;
+            loadingText.textContent = `${progress}%`;
+            loadingDetails.textContent = `Error loading: ${assetNames[url]}`;
+            
+            if (assetsLoaded === totalAssets) {
+                loadingComplete = true;
+                setTimeout(showGame, 1000);
+            }
+        }
+
+        function showGame() {
+            loadingScreen.style.opacity = '0';
+            setTimeout(() => {
+                loadingScreen.style.display = 'none';
+                gameContainer.style.display = 'block';
+                updateOnlineStatus(); // Show online status
+            }, 500);
+        }
+
+        // Initialize game
+        function init() {
+            // Load high score from cookie
+            const savedHighScore = getCookie('flyingModiHighScore');
+            if (savedHighScore !== null) {
+                highScore = parseInt(savedHighScore);
+                updateHighScoreDisplay();
+            }
+            
+            // Set initial bird position
+            bird.style.left = '50px';
+            bird.style.top = '200px';
+            
+            // Add event listeners
+            startButton.addEventListener('click', startGame);
+            gameContainer.addEventListener('click', handleJump);
+            document.addEventListener('keydown', function(e) {
+                if (e.code === 'Space') {
+                    handleJump();
+                }
+            });
+            
+            // Touch events for mobile
+            gameContainer.addEventListener('touchstart', handleJump);
+            
+            // Start loading assets
+            loadAssets();
+        }
+
+        // Update high score display
+        function updateHighScoreDisplay() {
+            let medalClass = "";
+            if (highScore >= 50) {
+                medalClass = "gold";
+            } else if (highScore >= 25) {
+                medalClass = "silver";
+            } else if (highScore >= 10) {
+                medalClass = "bronze";
+            }
+            
+            highScoreDisplay.innerHTML = `High Score: ${highScore}`;
+            if (medalClass) {
+                highScoreDisplay.innerHTML += ` <span class="medal ${medalClass}"></span>`;
+            }
+        }
+
+        // Start the game
+        function startGame() {
+            if (gameStarted) return;
+            
+            gameStarted = true;
+            gameOver = false;
+            score = 0;
+            frames = 0;
+            pipes = [];
+            pipePairs = [];
+            
+            // Reset bird position and velocity
+            bird.style.top = '200px';
+            birdVelocity = 0;
+            
+            // Update score display
+            scoreDisplay.textContent = score;
+            
+            // Hide start message
+            gameMessage.style.display = 'none';
+            
+            // Start background music
+            backgroundMusic.play();
+            
+            // Start game loop
+            gameLoop();
+        }
+
+        // Handle bird jump
+        function handleJump() {
+            if (!gameStarted) {
+                startGame();
+                return;
+            }
+            
+            if (gameOver) {
+                restartGame();
+                return;
+            }
+            
+            birdVelocity = birdJump;
+            flapSound.currentTime = 0;
+            flapSound.play();
+            
+            // Add jump animation
+            bird.style.transform = 'rotate(-20deg)';
+            setTimeout(() => {
+                bird.style.transform = 'rotate(0deg)';
+            }, 200);
+        }
+
+        // Game loop
+        function gameLoop() {
+            if (gameOver) return;
+            
+            update();
+            draw();
+            
+            frames++;
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Update game state
+        function update() {
+            // Apply gravity to bird
+            birdVelocity += gravity;
+            let birdTop = parseInt(bird.style.top);
+            birdTop += birdVelocity;
+            bird.style.top = birdTop + 'px';
+            
+            // Check for collisions with ground or ceiling
+            if (birdTop <= 0 || birdTop >= gameContainer.offsetHeight - 50 - bird.offsetHeight) {
+                endGame();
+                return;
+            }
+            
+            // Generate pipes
+            if (frames % pipeInterval === 0) {
+                createPipe();
+            }
+            
+            // Move pipes and check for collisions
+            for (let i = 0; i < pipes.length; i++) {
+                let pipe = pipes[i];
+                let pipeLeft = parseInt(pipe.style.left);
+                
+                // Move pipe to the left
+                pipeLeft -= 2;
+                pipe.style.left = pipeLeft + 'px';
+                
+                // Check if pipe is off screen
+                if (pipeLeft < -60) {
+                    pipe.remove();
+                    pipes.splice(i, 1);
+                    i--;
+                    continue;
+                }
+                
+                // Check for collision with bird
+                if (checkCollision(bird, pipe)) {
+                    endGame();
+                    return;
+                }
+            }
+            
+            // Check for pipe pairs that have been passed
+            for (let i = 0; i < pipePairs.length; i++) {
+                let pair = pipePairs[i];
+                let pipeLeft = parseInt(pair.top.style.left);
+                
+                // If the bird has passed the pipe pair and it hasn't been scored yet
+                if (pipeLeft + 60 < 50 && !pair.scored) {
+                    pair.scored = true;
+                    score++;
+                    scoreDisplay.textContent = score;
+                    
+                    // Increase difficulty slightly as score increases
+                    if (score % 10 === 0 && pipeInterval > 80) {
+                        pipeInterval -= 2;
+                    }
+                }
+            }
+        }
+
+        // Draw game elements
+        function draw() {
+            // Nothing specific needed here as CSS handles most rendering
+        }
+
+        // Create a new pipe
+        function createPipe() {
+            // Ensure minimum pipe height for playability
+            let minPipeHeight = 50;
+            let maxPipeHeight = gameContainer.offsetHeight - pipeGap - 50 - minPipeHeight;
+            
+            let pipeTopHeight = Math.floor(Math.random() * (maxPipeHeight - minPipeHeight)) + minPipeHeight;
+            let pipeBottomHeight = gameContainer.offsetHeight - pipeTopHeight - pipeGap - 50;
+            
+            // Create top pipe
+            let topPipe = document.createElement('div');
+            topPipe.className = 'pipe pipe-top';
+            topPipe.style.height = pipeTopHeight + 'px';
+            topPipe.style.left = gameContainer.offsetWidth + 'px';
+            gameContainer.appendChild(topPipe);
+            pipes.push(topPipe);
+            
+            // Create bottom pipe
+            let bottomPipe = document.createElement('div');
+            bottomPipe.className = 'pipe pipe-bottom';
+            bottomPipe.style.height = pipeBottomHeight + 'px';
+            bottomPipe.style.left = gameContainer.offsetWidth + 'px';
+            bottomPipe.style.bottom = '50px';
+            gameContainer.appendChild(bottomPipe);
+            pipes.push(bottomPipe);
+            
+            // Store pipe pair for scoring
+            pipePairs.push({
+                top: topPipe,
+                bottom: bottomPipe,
+                scored: false
+            });
+        }
+
+        // Check collision between bird and pipe
+        function checkCollision(bird, pipe) {
+            let birdRect = bird.getBoundingClientRect();
+            let pipeRect = pipe.getBoundingClientRect();
+            
+            return !(
+                birdRect.right < pipeRect.left + 5 || // Added 5px padding for more forgiving collisions
+                birdRect.left > pipeRect.right - 5 ||
+                birdRect.bottom < pipeRect.top + 5 ||
+                birdRect.top > pipeRect.bottom - 5
+            );
+        }
+
+        // End the game
+        function endGame() {
+            gameOver = true;
+            backgroundMusic.pause();
+            gameOverSound.play();
+            
+            // Check for new high score
+            let newHighScore = false;
+            if (score > highScore) {
+                highScore = score;
+                newHighScore = true;
+                setCookie('flyingModiHighScore', highScore, 365); // Save for 1 year
+                updateHighScoreDisplay();
+                
+                // Play new high score sound
+                try {
+                    const highScoreSound = new Audio('data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==');
+                    highScoreSound.volume = 0.7;
+                    highScoreSound.play();
+                } catch(e) {
+                    console.log("Could not play high score sound");
+                }
+            }
+            
+            // Show game over message
+            let message = `
+                <h1>Game Over</h1>
+                <p>Score: ${score}</p>
+                <p>High Score: ${highScore}</p>
+            `;
+            
+            if (newHighScore) {
+                message += `<p style="color: gold; font-weight: bold;">New High Score!</p>`;
+            }
+            
+            message += `<button id="restart-button">Play Again</button>`;
+            
+            gameMessage.innerHTML = message;
+            gameMessage.style.display = 'block';
+            
+            // Add event listener to restart button
+            document.getElementById('restart-button').addEventListener('click', restartGame);
+        }
+
+        // Restart the game
+        function restartGame() {
+            // Remove all pipes
+            pipes.forEach(pipe => pipe.remove());
+            pipes = [];
+            pipePairs = [];
+            
+            // Reset score
+            score = 0;
+            scoreDisplay.textContent = score;
+            
+            // Reset difficulty
+            pipeInterval = 110;
+            
+            // Hide game over message
+            gameMessage.style.display = 'none';
+            
+            // Reset game state
+            gameOver = false;
+            frames = 0;
+            
+            // Reset bird position
+            bird.style.top = '200px';
+            birdVelocity = 0;
+            
+            // Restart background music
+            backgroundMusic.currentTime = 0;
+            backgroundMusic.play();
+            
+            // Restart game loop
+            gameLoop();
+        }
+
+        // Initialize the game when page loads
+        window.onload = init;
+    </script>
+</body>
+</html>
