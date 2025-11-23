@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Flying Modi</title>
     <meta name="theme-color" content="#1E90FF">
-    <meta name="description" content="Flappy Bird Clone, But It's Modi ji (by @xsyanic on GitHub)">
+    <meta name="description" content="Flappy Bird, but it's Modi ji (by @xsyanic in GitHub / Instagram: @syanicbhaii)">
     <link rel="manifest" href="manifest.json">
     <link rel="icon" href="icon.png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -15,6 +15,9 @@
             padding: 0;
             box-sizing: border-box;
             user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
         }
 
         body {
@@ -22,9 +25,21 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            background: linear-gradient(to bottom, #87CEEB, #1E90FF);
+            background: #000; /* Black bars color */
             font-family: 'Arial Rounded MT Bold', 'Arial', sans-serif;
             overflow: hidden;
+            touch-action: manipulation;
+        }
+
+        #game-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 360px;
+            height: 640px;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
         #loading-screen {
@@ -80,16 +95,16 @@
 
         #game-container {
             position: relative;
-            width: 100%;
-            max-width: 360px;
+            width: 360px;
             height: 640px;
             background-image: url('bg.png');
             background-size: cover;
             background-position: center;
             overflow: hidden;
-            border-radius: 10px;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
             display: none;
+            transform: translateZ(0);
+            will-change: transform;
+            -webkit-transform: translateZ(0);
         }
 
         #bird {
@@ -100,13 +115,18 @@
             background-size: contain;
             background-repeat: no-repeat;
             z-index: 10;
-            transition: transform 0.1s;
+            transform: translateZ(0);
+            will-change: transform;
+            -webkit-transform: translateZ(0);
         }
 
         .pipe {
             position: absolute;
             width: 60px;
             z-index: 5;
+            transform: translateZ(0);
+            will-change: transform;
+            -webkit-transform: translateZ(0);
         }
 
         .pipe-top {
@@ -186,10 +206,7 @@
             box-shadow: 0 4px 0 #d35400;
             transition: all 0.1s;
             margin-top: 10px;
-        }
-
-        #start-button:hover {
-            background-color: #f39c12;
+            touch-action: manipulation;
         }
 
         #start-button:active {
@@ -220,7 +237,7 @@
         #install-button {
             position: absolute;
             top: 10px;
-            left: 10px;
+            right: 10px;
             background-color: rgba(255, 255, 255, 0.2);
             border: none;
             border-radius: 50%;
@@ -231,6 +248,7 @@
             cursor: pointer;
             z-index: 25;
             display: none;
+            touch-action: manipulation;
         }
 
         #online-status {
@@ -304,11 +322,7 @@
             cursor: pointer;
             transition: all 0.3s;
             text-decoration: none;
-        }
-
-        .social-button:hover {
-            background-color: rgba(255, 255, 255, 0.3);
-            transform: scale(1.1);
+            touch-action: manipulation;
         }
 
         #github-button i {
@@ -319,12 +333,17 @@
             color: white;
         }
 
+        /* Mobile-specific styles */
         @media (max-width: 480px) {
-            #game-container {
-                width: 100vw;
+            #game-wrapper {
                 height: 100vh;
                 max-width: none;
-                border-radius: 0;
+            }
+            
+            #game-container {
+                width: 100vw;
+                height: 640px;
+                max-width: 360px;
             }
             
             #game-message {
@@ -350,66 +369,64 @@
             }
         }
 
+        /* PWA specific styles */
         @media all and (display-mode: standalone) {
             body {
                 padding: 0;
-            }
-            
-            #game-container {
-                border-radius: 0;
-                max-width: none;
             }
         }
     </style>
 </head>
 <body>
-    <div id="loading-screen">
-        <div id="social-buttons">
-            <a href="https://github.com/xsyanic/pwa-flying-modi" target="_blank" class="social-button" id="github-button" title="Star on GitHub">
-                <i class="fab fa-github"></i>
-            </a>
-            <a href="https://instagram.com/syanicbhaii" target="_blank" class="social-button" id="instagram-button" title="Follow on Instagram">
-                <i class="fab fa-instagram"></i>
-            </a>
+    <div id="game-wrapper">
+        <div id="loading-screen">
+            <div id="social-buttons">
+                <a href="https://github.com/xsyanic/pwa-flying-modi" target="_blank" class="social-button" id="github-button" title="Star on GitHub">
+                    <i class="fab fa-github"></i>
+                </a>
+                <a href="https://instagram.com/syanicbhaii" target="_blank" class="social-button" id="instagram-button" title="Follow on Instagram">
+                    <i class="fab fa-instagram"></i>
+                </a>
+            </div>
+            <h1 id="loading-title">Flying Modi</h1>
+            <p id="loading-text">0%</p>
+            <div id="loading-container">
+                <div id="loading-bar"></div>
+            </div>
+            <p id="loading-details">Preparing game assets...</p>
+            <div id="credits">by @xsyanic on GitHub</div>
         </div>
-        <h1 id="loading-title">Flying Modi</h1>
-        <p id="loading-text">0%</p>
-        <div id="loading-container">
-            <div id="loading-bar"></div>
+        
+        <div id="game-container">
+            <button id="install-button" title="Install App"><i class="fas fa-download"></i></button>
+            <div id="online-status" title="Online"></div>
+            <div id="social-buttons">
+                <a href="https://github.com/xsyanic/pwa-flying-modi" target="_blank" class="social-button" id="github-button" title="Star on GitHub">
+                    <i class="fab fa-github"></i>
+                </a>
+                <a href="https://instagram.com/syanicbhaii" target="_blank" class="social-button" id="instagram-button" title="Follow on Instagram">
+                    <i class="fab fa-instagram"></i>
+                </a>
+            </div>
+            <div id="bird"></div>
+            <div id="score">0</div>
+            <div id="high-score">High Score: 0</div>
+            <div id="game-message">
+                <h1>Flying Modi</h1>
+                <p>Tap or click to fly!</p>
+                <p>Avoid the pipes and try to beat your high score!</p>
+                <button id="start-button">Start Game</button>
+            </div>
+            <div id="game-over-screen">
+                <img id="game-over-image" src="" alt="Game Over">
+            </div>
+            <div id="ground"></div>
+            <div id="credits">by @xsyanic on GitHub</div>
         </div>
-        <p id="loading-details">Preparing game assets...</p>
-        <div id="credits">by @xsyanic on GitHub</div>
-    </div>
-    
-    <div id="game-container">
-        <button id="install-button" title="Install App"><i class="fas fa-download"></i></button>
-        <div id="online-status" title="Online"></div>
-        <div id="social-buttons">
-            <a href="https://github.com/xsyanic/pwa-flying-modi" target="_blank" class="social-button" id="github-button" title="Star on GitHub">
-                <i class="fab fa-github"></i>
-            </a>
-            <a href="https://instagram.com/syanicbhaii" target="_blank" class="social-button" id="instagram-button" title="Follow on Instagram">
-                <i class="fab fa-instagram"></i>
-            </a>
-        </div>
-        <div id="bird"></div>
-        <div id="score">0</div>
-        <div id="high-score">High Score: 0</div>
-        <div id="game-message">
-            <h1>Flying Modi</h1>
-            <p>Tap or click to fly!</p>
-            <p>Avoid the pipes and try to beat your high score!</p>
-            <button id="start-button">Start Game</button>
-        </div>
-        <div id="game-over-screen">
-            <img id="game-over-image" src="" alt="Game Over">
-        </div>
-        <div id="ground"></div>
-        <div id="credits">by @xsyanic on GitHub</div>
     </div>
 
     <script>
-        // Game variables
+        // Game variables - optimized values
         let gameStarted = false;
         let gameOver = false;
         let score = 0;
@@ -425,6 +442,9 @@
         let canRestart = false;
         let updateAvailable = false;
         let isOnline = navigator.onLine;
+        let lastFrameTime = 0;
+        let fps = 60;
+        let frameInterval = 1000 / fps;
         
         // Asset loading variables
         let assetsLoaded = 0;
@@ -451,24 +471,26 @@
         const gameOverScreen = document.getElementById('game-over-screen');
         const gameOverImage = document.getElementById('game-over-image');
 
-        // Audio elements
+        // Audio elements - preloaded
         const flapSound = new Audio();
         const gameOverSound = new Audio();
         const backgroundMusic = new Audio();
         const highScoreSound = new Audio();
-
-        [flapSound, gameOverSound, backgroundMusic, highScoreSound].forEach(audio => {
-            audio.addEventListener('error', (e) => {
-                console.error('Audio error:', e);
-            });
-        });
         
         // Set audio properties
         backgroundMusic.loop = true;
         backgroundMusic.volume = 0.5;
-        flapSound.volume = 0.3;
+        flapSound.volume = 0.7;
         gameOverSound.volume = 0.7;
         highScoreSound.volume = 0.7;
+
+        // Add error handling to audio elements
+        [flapSound, gameOverSound, backgroundMusic, highScoreSound].forEach(audio => {
+            audio.addEventListener('error', (e) => {
+                console.error('Audio error:', e);
+            });
+            audio.preload = 'auto';
+        });
 
         // Asset URLs
         const assetUrls = [
@@ -683,13 +705,7 @@
                         await loadAssetFromCache(url);
                     }
                 } catch (error) {
-                    // If network fails, try cache
-                    try {
-                        await loadAssetFromCache(url);
-                    } catch (cacheError) {
-                        console.error('Failed to load asset from both network and cache:', url);
-                        assetError(url);
-                    }
+                    await loadAssetFromCache(url);
                 }
             }
         }
@@ -697,10 +713,8 @@
         async function loadAssetFromNetwork(url) {
             return new Promise((resolve, reject) => {
                 if (url.match(/\.(mp3|wav|ogg)$/)) {
-                    // Create a temporary audio element to load and verify the sound
                     const audio = new Audio();
                     audio.addEventListener('canplaythrough', () => {
-                        // Once loaded, assign to the correct global audio element
                         assignAudioToGlobalElement(url, audio.src);
                         assetLoaded(url);
                         resolve();
@@ -711,7 +725,6 @@
                         reject();
                     }, { once: true });
                     
-                    // Use cache busting to ensure fresh load
                     audio.src = url + '?t=' + Date.now();
                 } else {
                     const img = new Image();
@@ -738,7 +751,6 @@
                         const blob = await response.blob();
                         const objectUrl = URL.createObjectURL(blob);
                         
-                        // Create audio element to verify the sound loads from cache
                         const audio = new Audio();
                         audio.addEventListener('canplaythrough', () => {
                             assignAudioToGlobalElement(url, objectUrl);
@@ -755,14 +767,11 @@
                         const blob = await response.blob();
                         const objectUrl = URL.createObjectURL(blob);
                         
-                        // For images, update the CSS or element src
                         if (url.includes('bg.png')) {
                             gameContainer.style.backgroundImage = `url(${objectUrl})`;
                         } else if (url.includes('bird.png')) {
                             bird.style.backgroundImage = `url(${objectUrl})`;
                         }
-                        // Note: pipe images are handled when pipes are created
-                        // Game over images are handled when game over screen is shown
                         
                         assetLoaded(url);
                     }
@@ -773,8 +782,9 @@
                 console.error('Error accessing cache:', error);
                 assetError(url);
             }
-        }   
+        }
 
+        // Helper function to assign loaded audio to the correct global element
         function assignAudioToGlobalElement(url, audioUrl) {
             if (url.includes('fly.mp3')) {
                 flapSound.src = audioUrl;
@@ -891,11 +901,13 @@
             backgroundMusic.currentTime = 0;
             backgroundMusic.play();
             
+            lastFrameTime = performance.now();
             gameLoop();
         }
 
         // Handle bird jump
-        function handleJump() {
+        function handleJump(e) {
+            e.preventDefault();
             if (!gameStarted) {
                 startGame();
                 return;
@@ -907,7 +919,7 @@
             
             birdVelocity = birdJump;
             flapSound.currentTime = 0;
-            flapSound.play();
+            flapSound.play().catch(e => console.log('Flap sound play failed:', e));
             
             bird.style.transform = 'rotate(-20deg)';
             setTimeout(() => {
@@ -922,19 +934,27 @@
             restartGame();
         }
 
-        // Game loop
-        function gameLoop() {
+        // Optimized game loop with frame rate control
+        function gameLoop(currentTime) {
             if (gameOver) return;
             
-            update();
-            draw();
+            const deltaTime = currentTime - lastFrameTime;
             
-            frames++;
+            if (deltaTime > frameInterval) {
+                lastFrameTime = currentTime - (deltaTime % frameInterval);
+                
+                update();
+                draw();
+                
+                frames++;
+            }
+            
             requestAnimationFrame(gameLoop);
         }
 
         // Update game state
         function update() {
+            // Apply gravity to bird
             birdVelocity += gravity;
             let birdTop = parseInt(bird.style.top);
             birdTop += birdVelocity;
@@ -952,35 +972,40 @@
                 createPipe();
             }
             
-            for (let i = 0; i < pipes.length; i++) {
+            // Move pipes and check for collisions
+            for (let i = pipes.length - 1; i >= 0; i--) {
                 let pipe = pipes[i];
                 let pipeLeft = parseInt(pipe.style.left);
                 
                 pipeLeft -= 2;
                 pipe.style.left = pipeLeft + 'px';
                 
+                // Check if pipe is off screen
                 if (pipeLeft < -60) {
                     pipe.remove();
                     pipes.splice(i, 1);
-                    i--;
                     continue;
                 }
                 
+                // Check for collision with bird
                 if (checkCollision(bird, pipe)) {
                     endGame();
                     return;
                 }
             }
             
+            // Check for pipe pairs that have been passed
             for (let i = 0; i < pipePairs.length; i++) {
                 let pair = pipePairs[i];
                 let pipeLeft = parseInt(pair.top.style.left);
                 
+                // If the bird has passed the pipe pair and it hasn't been scored yet
                 if (pipeLeft + 60 < 50 && !pair.scored) {
                     pair.scored = true;
                     score++;
                     scoreDisplay.textContent = score;
                     
+                    // Increase difficulty slightly as score increases
                     if (score % 10 === 0 && pipeInterval > 80) {
                         pipeInterval -= 2;
                     }
@@ -1050,11 +1075,11 @@
                 
                 gameOverImage.src = 'highscore.png';
                 highScoreSound.currentTime = 0;
-                highScoreSound.play();
+                highScoreSound.play().catch(e => console.log('High score sound play failed:', e));
             } else {
                 gameOverImage.src = 'gameover.png';
                 gameOverSound.currentTime = 0;
-                gameOverSound.play();
+                gameOverSound.play().catch(e => console.log('Game over sound play failed:', e));
             }
             
             gameOverScreen.style.display = 'flex';
@@ -1095,6 +1120,7 @@
             backgroundMusic.currentTime = 0;
             backgroundMusic.play();
             
+            lastFrameTime = performance.now();
             gameLoop();
         }
 
