@@ -1,4 +1,4 @@
-const CACHE_NAME = 'flying-modi-v1';
+const CACHE_NAME = 'flying-modi-v2';
 const urlsToCache = [
   './',
   './index.html',

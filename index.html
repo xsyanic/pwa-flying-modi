@@ -659,7 +659,7 @@
             if (!isOnline) return;
             
             try {
-                const cache = await caches.open('flying-modi-v1');
+                const cache = await caches.open('flying-modi-v2');
                 const updatePromises = urlsToCache.map(async (url) => {
                     try {
                         const networkResponse = await fetch(url);
@@ -805,7 +805,7 @@
 
         async function loadAssetFromCache(url) {
             try {
-                const cache = await caches.open('flying-modi-v1');
+                const cache = await caches.open('flying-modi-v2');
                 const response = await cache.match(url);
                 
                 if (response) {
