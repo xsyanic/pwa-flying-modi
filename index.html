@@ -5,379 +5,182 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Flying Modi</title>
     <meta name="theme-color" content="#1E90FF">
-    <meta name="description" content="Flappy Bird, but it's Modi ji (by @xsyanic on GitHub / Instagram: @syanicbhaii)">
+    <meta name="description" content="Flappy Bird Clone, But It's Modi ji (by @xsyanic on GitHub)">
     <link rel="manifest" href="manifest.json">
     <link rel="icon" href="icon.png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            user-select: none;
-            -webkit-tap-highlight-color: transparent;
-            -webkit-touch-callout: none;
-            -webkit-user-select: none;
-        }
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        user-select: none;
+    }
 
+    body {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        background: linear-gradient(to bottom, #87CEEB, #1E90FF);
+        font-family: 'Arial Rounded MT Bold', 'Arial', sans-serif;
+        overflow: hidden;
+        padding: 20px;
+    }
+
+    #game-wrapper {
+        position: relative;
+        width: 100%;
+        max-width: 360px;
+        height: 640px;
+        margin: 0 auto;
+    }
+
+    #loading-screen {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(to bottom, #1E90FF, #87CEEB);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 100;
+        color: white;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        border-radius: 10px;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+    }
+
+    #loading-title {
+        font-size: 36px;
+        margin-bottom: 30px;
+        color: #f1c40f;
+        text-align: center;
+    }
+
+    #loading-container {
+        width: 80%;
+        max-width: 300px;
+        background-color: rgba(255, 255, 255, 0.2);
+        border-radius: 10px;
+        padding: 3px;
+        margin-bottom: 20px;
+    }
+
+    #loading-bar {
+        height: 20px;
+        background: linear-gradient(to right, #f1c40f, #f39c12);
+        border-radius: 8px;
+        width: 0%;
+        transition: width 0.3s ease;
+    }
+
+    #loading-text {
+        font-size: 18px;
+        margin-bottom: 10px;
+    }
+
+    #loading-details {
+        font-size: 14px;
+        margin-top: 10px;
+        color: rgba(255, 255, 255, 0.8);
+    }
+
+    #game-container {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        background-image: url('bg.png');
+        background-size: cover;
+        background-position: center;
+        overflow: hidden;
+        border-radius: 10px;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+        display: none;
+    }
+
+    /* Rest of your existing CSS remains the same until the media queries */
+
+    @media (max-width: 480px) {
         body {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            background: #000; /* Black bars color */
-            font-family: 'Arial Rounded MT Bold', 'Arial', sans-serif;
-            overflow: hidden;
-            touch-action: manipulation;
+            padding: 10px;
+            align-items: flex-start;
+            padding-top: 20px;
         }
-
+        
         #game-wrapper {
-            position: relative;
             width: 100%;
-            max-width: 360px;
-            height: 640px;
-            background: #000;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        #loading-screen {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(to bottom, #1E90FF, #87CEEB);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 100;
-            color: white;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-        }
-
-        #loading-title {
-            font-size: 36px;
-            margin-bottom: 30px;
-            color: #f1c40f;
-            text-align: center;
-        }
-
-        #loading-container {
-            width: 80%;
-            max-width: 300px;
-            background-color: rgba(255, 255, 255, 0.2);
-            border-radius: 10px;
-            padding: 3px;
-            margin-bottom: 20px;
-        }
-
-        #loading-bar {
-            height: 20px;
-            background: linear-gradient(to right, #f1c40f, #f39c12);
-            border-radius: 8px;
-            width: 0%;
-            transition: width 0.3s ease;
-        }
-
-        #loading-text {
-            font-size: 18px;
-            margin-bottom: 10px;
-        }
-
-        #loading-details {
-            font-size: 14px;
-            margin-top: 10px;
-            color: rgba(255, 255, 255, 0.8);
-        }
-
-        #game-container {
-            position: relative;
-            width: 360px;
-            height: 640px;
-            background-image: url('bg.png');
-            background-size: cover;
-            background-position: center;
-            overflow: hidden;
-            display: none;
-            transform: translateZ(0);
-            will-change: transform;
-            -webkit-transform: translateZ(0);
-        }
-
-        #bird {
-            position: absolute;
-            width: 40px;
-            height: 40px;
-            background-image: url('bird.png');
-            background-size: contain;
-            background-repeat: no-repeat;
-            z-index: 10;
-            transform: translateZ(0);
-            will-change: transform;
-            -webkit-transform: translateZ(0);
-        }
-
-        .pipe {
-            position: absolute;
-            width: 60px;
-            z-index: 5;
-            transform: translateZ(0);
-            will-change: transform;
-            -webkit-transform: translateZ(0);
-        }
-
-        .pipe-top {
-            top: 0;
-            background-image: url('pipe_up.png');
-            background-size: 100% 100%;
-        }
-
-        .pipe-bottom {
-            bottom: 0;
-            background-image: url('pipe_down.png');
-            background-size: 100% 100%;
-        }
-
-        #score {
-            position: absolute;
-            top: 20px;
-            left: 0;
-            width: 100%;
-            text-align: center;
-            font-size: 40px;
-            font-weight: bold;
-            color: white;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-            z-index: 15;
-        }
-
-        #high-score {
-            position: absolute;
-            top: 70px;
-            left: 0;
-            width: 100%;
-            text-align: center;
-            font-size: 16px;
-            font-weight: bold;
-            color: white;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-            z-index: 15;
-        }
-
-        #game-message {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            text-align: center;
-            color: white;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-            z-index: 20;
-            background-color: rgba(0, 0, 0, 0.7);
-            padding: 25px;
-            border-radius: 15px;
-            width: 80%;
-            max-width: 300px;
-        }
-
-        #game-message h1 {
-            font-size: 36px;
-            margin-bottom: 15px;
-            color: #f1c40f;
-        }
-
-        #game-message p {
-            font-size: 18px;
-            margin-bottom: 20px;
-        }
-
-        #start-button {
-            background-color: #f1c40f;
-            color: #2c3e50;
-            border: none;
-            padding: 12px 30px;
-            font-size: 20px;
-            font-weight: bold;
-            border-radius: 30px;
-            cursor: pointer;
-            box-shadow: 0 4px 0 #d35400;
-            transition: all 0.1s;
-            margin-top: 10px;
-            touch-action: manipulation;
-        }
-
-        #start-button:active {
-            transform: translateY(4px);
-            box-shadow: 0 0 0 #d35400;
-        }
-
-        #ground {
-            position: absolute;
-            bottom: 0;
-            width: 100%;
-            height: 50px;
-            background: linear-gradient(to bottom, #8B4513, #654321);
-            z-index: 8;
-            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.3);
-        }
-
-        .medal {
-            display: inline-block;
-            margin-left: 10px;
-            font-size: 20px;
-        }
-
-        .gold { color: gold; }
-        .silver { color: silver; }
-        .bronze { color: #cd7f32; }
-
-        #install-button {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            background-color: rgba(255, 255, 255, 0.2);
-            border: none;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            color: white;
-            font-size: 20px;
-            cursor: pointer;
-            z-index: 25;
-            display: none;
-            touch-action: manipulation;
-        }
-
-        #online-status {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            background-color: #2ecc71;
-            z-index: 25;
-            display: none;
-        }
-
-        #online-status.offline {
-            background-color: #e74c3c;
-        }
-
-        #game-over-screen {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 30;
-            display: none;
-        }
-
-        #game-over-image {
-            width: 60%;
-            max-width: 280px;
             height: auto;
-            object-fit: contain;
+            aspect-ratio: 9/16;
+            max-height: 80vh;
         }
-
-        #credits {
-            position: absolute;
-            bottom: 20px;
-            left: 0;
-            width: 100%;
-            text-align: center;
-            color: white;
-            font-size: 14px;
-            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
-            z-index: 20;
+        
+        #game-message {
+            width: 90%;
+            padding: 20px;
         }
-
+        
+        #game-message h1 {
+            font-size: 32px;
+        }
+        
+        #loading-title {
+            font-size: 28px;
+        }
+        
         #social-buttons {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            display: flex;
-            gap: 10px;
-            z-index: 20;
+            top: 15px;
+            right: 15px;
         }
+        
+        #game-over-image {
+            width: 70%;
+        }
+        
+        #credits {
+            font-size: 12px;
+            bottom: 15px;
+        }
+    }
 
-        .social-button {
-            background-color: rgba(255, 255, 255, 0.2);
-            border: none;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 18px;
-            cursor: pointer;
-            transition: all 0.3s;
-            text-decoration: none;
-            touch-action: manipulation;
+    @media (max-height: 700px) and (max-width: 480px) {
+        #game-wrapper {
+            max-height: 85vh;
         }
+    }
 
-        #github-button i {
-            color: white;
+    @media (max-height: 600px) and (max-width: 480px) {
+        #game-wrapper {
+            max-height: 90vh;
         }
+    }
 
-        #instagram-button i {
-            color: white;
+    /* PWA specific styles */
+    @media all and (display-mode: standalone) {
+        body {
+            padding: 0;
         }
-
-        /* Mobile-specific styles */
-        @media (max-width: 480px) {
-            #game-wrapper {
-                height: 100vh;
-                max-width: none;
-            }
-            
-            #game-container {
-                width: 100vw;
-                height: 640px;
-                max-width: 360px;
-            }
-            
-            #game-message {
-                width: 90%;
-                padding: 20px;
-            }
-            
-            #game-message h1 {
-                font-size: 32px;
-            }
-            
-            #loading-title {
-                font-size: 28px;
-            }
-            
-            #social-buttons {
-                top: 15px;
-                right: 15px;
-            }
-            
-            #game-over-image {
-                width: 70%;
-            }
+        
+        #game-wrapper {
+            max-width: none;
+            height: 100vh;
+            border-radius: 0;
         }
-
-        /* PWA specific styles */
-        @media all and (display-mode: standalone) {
-            body {
-                padding: 0;
-            }
+        
+        #game-container {
+            border-radius: 0;
         }
-    </style>
+        
+        #loading-screen {
+            border-radius: 0;
+        }
+    }
+</style>
 </head>
-<body>
+    <body>
     <div id="game-wrapper">
         <div id="loading-screen">
             <div id="social-buttons">
@@ -424,9 +227,8 @@
             <div id="credits">by @xsyanic on GitHub</div>
         </div>
     </div>
-
     <script>
-        // Game variables - optimized values
+        // Game variables
         let gameStarted = false;
         let gameOver = false;
         let score = 0;
@@ -442,9 +244,6 @@
         let canRestart = false;
         let updateAvailable = false;
         let isOnline = navigator.onLine;
-        let lastFrameTime = 0;
-        let fps = 60;
-        let frameInterval = 1000 / fps;
         
         // Asset loading variables
         let assetsLoaded = 0;
@@ -471,26 +270,24 @@
         const gameOverScreen = document.getElementById('game-over-screen');
         const gameOverImage = document.getElementById('game-over-image');
 
-        // Audio elements - preloaded
+        // Audio elements
         const flapSound = new Audio();
         const gameOverSound = new Audio();
         const backgroundMusic = new Audio();
         const highScoreSound = new Audio();
-        
-        // Set audio properties
-        backgroundMusic.loop = true;
-        backgroundMusic.volume = 0.5;
-        flapSound.volume = 0.7;
-        gameOverSound.volume = 0.7;
-        highScoreSound.volume = 0.7;
 
-        // Add error handling to audio elements
         [flapSound, gameOverSound, backgroundMusic, highScoreSound].forEach(audio => {
             audio.addEventListener('error', (e) => {
                 console.error('Audio error:', e);
             });
-            audio.preload = 'auto';
         });
+        
+        // Set audio properties
+        backgroundMusic.loop = true;
+        backgroundMusic.volume = 0.5;
+        flapSound.volume = 0.3;
+        gameOverSound.volume = 0.7;
+        highScoreSound.volume = 0.7;
 
         // Asset URLs
         const assetUrls = [
@@ -705,7 +502,13 @@
                         await loadAssetFromCache(url);
                     }
                 } catch (error) {
-                    await loadAssetFromCache(url);
+                    // If network fails, try cache
+                    try {
+                        await loadAssetFromCache(url);
+                    } catch (cacheError) {
+                        console.error('Failed to load asset from both network and cache:', url);
+                        assetError(url);
+                    }
                 }
             }
         }
@@ -713,8 +516,10 @@
         async function loadAssetFromNetwork(url) {
             return new Promise((resolve, reject) => {
                 if (url.match(/\.(mp3|wav|ogg)$/)) {
+                    // Create a temporary audio element to load and verify the sound
                     const audio = new Audio();
                     audio.addEventListener('canplaythrough', () => {
+                        // Once loaded, assign to the correct global audio element
                         assignAudioToGlobalElement(url, audio.src);
                         assetLoaded(url);
                         resolve();
@@ -725,6 +530,7 @@
                         reject();
                     }, { once: true });
                     
+                    // Use cache busting to ensure fresh load
                     audio.src = url + '?t=' + Date.now();
                 } else {
                     const img = new Image();
@@ -751,6 +557,7 @@
                         const blob = await response.blob();
                         const objectUrl = URL.createObjectURL(blob);
                         
+                        // Create audio element to verify the sound loads from cache
                         const audio = new Audio();
                         audio.addEventListener('canplaythrough', () => {
                             assignAudioToGlobalElement(url, objectUrl);
@@ -767,11 +574,14 @@
                         const blob = await response.blob();
                         const objectUrl = URL.createObjectURL(blob);
                         
+                        // For images, update the CSS or element src
                         if (url.includes('bg.png')) {
                             gameContainer.style.backgroundImage = `url(${objectUrl})`;
                         } else if (url.includes('bird.png')) {
                             bird.style.backgroundImage = `url(${objectUrl})`;
                         }
+                        // Note: pipe images are handled when pipes are created
+                        // Game over images are handled when game over screen is shown
                         
                         assetLoaded(url);
                     }
@@ -782,9 +592,8 @@
                 console.error('Error accessing cache:', error);
                 assetError(url);
             }
-        }
+        }   
 
-        // Helper function to assign loaded audio to the correct global element
         function assignAudioToGlobalElement(url, audioUrl) {
             if (url.includes('fly.mp3')) {
                 flapSound.src = audioUrl;
@@ -901,13 +710,11 @@
             backgroundMusic.currentTime = 0;
             backgroundMusic.play();
             
-            lastFrameTime = performance.now();
             gameLoop();
         }
 
         // Handle bird jump
-        function handleJump(e) {
-            e.preventDefault();
+        function handleJump() {
             if (!gameStarted) {
                 startGame();
                 return;
@@ -919,7 +726,7 @@
             
             birdVelocity = birdJump;
             flapSound.currentTime = 0;
-            flapSound.play().catch(e => console.log('Flap sound play failed:', e));
+            flapSound.play();
             
             bird.style.transform = 'rotate(-20deg)';
             setTimeout(() => {
@@ -934,27 +741,19 @@
             restartGame();
         }
 
-        // Optimized game loop with frame rate control
-        function gameLoop(currentTime) {
+        // Game loop
+        function gameLoop() {
             if (gameOver) return;
             
-            const deltaTime = currentTime - lastFrameTime;
+            update();
+            draw();
             
-            if (deltaTime > frameInterval) {
-                lastFrameTime = currentTime - (deltaTime % frameInterval);
-                
-                update();
-                draw();
-                
-                frames++;
-            }
-            
+            frames++;
             requestAnimationFrame(gameLoop);
         }
 
         // Update game state
         function update() {
-            // Apply gravity to bird
             birdVelocity += gravity;
             let birdTop = parseInt(bird.style.top);
             birdTop += birdVelocity;
@@ -972,40 +771,35 @@
                 createPipe();
             }
             
-            // Move pipes and check for collisions
-            for (let i = pipes.length - 1; i >= 0; i--) {
+            for (let i = 0; i < pipes.length; i++) {
                 let pipe = pipes[i];
                 let pipeLeft = parseInt(pipe.style.left);
                 
                 pipeLeft -= 2;
                 pipe.style.left = pipeLeft + 'px';
                 
-                // Check if pipe is off screen
                 if (pipeLeft < -60) {
                     pipe.remove();
                     pipes.splice(i, 1);
+                    i--;
                     continue;
                 }
                 
-                // Check for collision with bird
                 if (checkCollision(bird, pipe)) {
                     endGame();
                     return;
                 }
             }
             
-            // Check for pipe pairs that have been passed
             for (let i = 0; i < pipePairs.length; i++) {
                 let pair = pipePairs[i];
                 let pipeLeft = parseInt(pair.top.style.left);
                 
-                // If the bird has passed the pipe pair and it hasn't been scored yet
                 if (pipeLeft + 60 < 50 && !pair.scored) {
                     pair.scored = true;
                     score++;
                     scoreDisplay.textContent = score;
                     
-                    // Increase difficulty slightly as score increases
                     if (score % 10 === 0 && pipeInterval > 80) {
                         pipeInterval -= 2;
                     }
@@ -1075,11 +869,11 @@
                 
                 gameOverImage.src = 'highscore.png';
                 highScoreSound.currentTime = 0;
-                highScoreSound.play().catch(e => console.log('High score sound play failed:', e));
+                highScoreSound.play();
             } else {
                 gameOverImage.src = 'gameover.png';
                 gameOverSound.currentTime = 0;
-                gameOverSound.play().catch(e => console.log('Game over sound play failed:', e));
+                gameOverSound.play();
             }
             
             gameOverScreen.style.display = 'flex';
@@ -1120,7 +914,6 @@
             backgroundMusic.currentTime = 0;
             backgroundMusic.play();
             
-            lastFrameTime = performance.now();
             gameLoop();
         }
 
@@ -1129,4 +922,3 @@
     </script>
 </body>
 </html>
-
