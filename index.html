@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flying Modi</title>
+    <title>Flying Modi V2</title>
     <meta name="theme-color" content="#1E90FF">
-    <meta name="description" content="Flappy Bird, but it's Modi ji (by @xsyanic (GitHub) / @sysnicbhaii (Instagram)">
+    <meta name="description" content="Flappy Bird, But it's Modi ji - by @xsyanic (Github) / @syanicbhaii (Instagram)">
     <link rel="manifest" href="manifest.json">
     <link rel="icon" href="icon.png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -15,6 +15,9 @@
             padding: 0;
             box-sizing: border-box;
             user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
         }
 
         body {
@@ -26,6 +29,7 @@
             font-family: 'Arial Rounded MT Bold', 'Arial', sans-serif;
             overflow: hidden;
             padding: 20px;
+            touch-action: manipulation;
         }
 
         #game-wrapper {
@@ -33,7 +37,11 @@
             width: 100%;
             max-width: 360px;
             height: 640px;
-            margin: 0 auto;
+            margin: auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            touch-action: none;
         }
 
         #loading-screen {
@@ -100,6 +108,7 @@
             border-radius: 10px;
             box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
             display: none;
+            touch-action: none;
         }
 
         #bird {
@@ -196,6 +205,7 @@
             box-shadow: 0 4px 0 #d35400;
             transition: all 0.1s;
             margin-top: 10px;
+            touch-action: manipulation;
         }
 
         #start-button:hover {
@@ -230,7 +240,7 @@
         #install-button {
             position: absolute;
             top: 10px;
-            left: 10px;
+            right: 10px;
             background-color: rgba(255, 255, 255, 0.2);
             border: none;
             border-radius: 50%;
@@ -241,6 +251,7 @@
             cursor: pointer;
             z-index: 25;
             display: none;
+            touch-action: manipulation;
         }
 
         #online-status {
@@ -314,6 +325,7 @@
             cursor: pointer;
             transition: all 0.3s;
             text-decoration: none;
+            touch-action: manipulation;
         }
 
         .social-button:hover {
@@ -332,15 +344,17 @@
         @media (max-width: 480px) {
             body {
                 padding: 10px;
-                align-items: flex-start;
-                padding-top: 20px;
+                display: flex;
+                justify-content: center;
+                align-items: center;
             }
             
             #game-wrapper {
                 width: 100%;
                 height: auto;
                 aspect-ratio: 9/16;
-                max-height: 80vh;
+                max-height: 90vh;
+                max-width: 100%;
             }
             
             #game-message {
@@ -379,7 +393,13 @@
 
         @media (max-height: 600px) and (max-width: 480px) {
             #game-wrapper {
-                max-height: 90vh;
+                max-height: 80vh;
+            }
+        }
+
+        @media (max-height: 500px) and (max-width: 480px) {
+            #game-wrapper {
+                max-height: 75vh;
             }
         }
 
@@ -387,12 +407,16 @@
         @media all and (display-mode: standalone) {
             body {
                 padding: 0;
+                display: flex;
+                justify-content: center;
+                align-items: center;
             }
             
             #game-wrapper {
-                max-width: none;
+                max-width: 100%;
                 height: 100vh;
                 border-radius: 0;
+                max-height: 100vh;
             }
             
             #game-container {
@@ -470,6 +494,11 @@
         let canRestart = false;
         let updateAvailable = false;
         let isOnline = navigator.onLine;
+        
+        // Double-tap prevention
+        let lastTapTime = 0;
+        let tapTimeout;
+        const TAP_DELAY = 300; // milliseconds between allowed taps
         
         // Asset loading variables
         let assetsLoaded = 0;
@@ -897,17 +926,51 @@
             bird.style.top = '200px';
             
             startButton.addEventListener('click', startGame);
-            gameContainer.addEventListener('click', handleJump);
+            
+            // Improved touch/click handling to prevent double-taps
+            setupTouchControls();
+            
             document.addEventListener('keydown', function(e) {
                 if (e.code === 'Space') {
+                    e.preventDefault();
                     handleJump();
                 }
             });
             
-            gameContainer.addEventListener('touchstart', handleJump);
             gameOverScreen.addEventListener('click', handleRestart);
             
             loadAssets();
+        }
+
+        // Setup touch controls with double-tap prevention
+        function setupTouchControls() {
+            let touchMoved = false;
+            
+            // Touch start - track initial touch
+            gameContainer.addEventListener('touchstart', function(e) {
+                touchMoved = false;
+                e.preventDefault();
+            }, { passive: false });
+            
+            // Touch move - mark as moved to prevent jump on drag
+            gameContainer.addEventListener('touchmove', function(e) {
+                touchMoved = true;
+                e.preventDefault();
+            }, { passive: false });
+            
+            // Touch end - handle jump if not a drag
+            gameContainer.addEventListener('touchend', function(e) {
+                if (!touchMoved) {
+                    e.preventDefault();
+                    handleJump();
+                }
+            }, { passive: false });
+            
+            // Mouse click
+            gameContainer.addEventListener('click', function(e) {
+                e.preventDefault();
+                handleJump();
+            });
         }
 
         // Update high score display
@@ -952,604 +1015,18 @@
             gameLoop();
         }
 
-        // Handle bird jump
+        // Handle bird jump with double-tap prevention
         function handleJump() {
-            if (!gameStarted) {
-                startGame();
+            const currentTime = new Date().getTime();
+            const tapLength = currentTime - lastTapTime;
+            
+            // Prevent multiple rapid jumps
+            if (tapLength > 0 && tapLength < TAP_DELAY) {
                 return;
             }
             
-            if (gameOver) {
-                return;
-            }
+            lastTapTime = currentTime;
             
-            birdVelocity = birdJump;
-            flapSound.currentTime = 0;
-            flapSound.play();
-            
-            bird.style.transform = 'rotate(-20deg)';
-            setTimeout(() => {
-                bird.style.transform = 'rotate(0deg)';
-            }, 200);
-        }
-
-        // Handle restart after game over
-        function handleRestart() {
-            if (!canRestart || !gameOver) return;
-            
-            restartGame();
-        }
-
-        // Game loop
-        function gameLoop() {
-            if (gameOver) return;
-            
-            update();
-            draw();
-            
-            frames++;
-            requestAnimationFrame(gameLoop);
-        }
-
-        // Update game state
-        function update() {
-            birdVelocity += gravity;
-            let birdTop = parseInt(bird.style.top);
-            birdTop += birdVelocity;
-            bird.style.top = birdTop + 'px';
-            
-            const birdBottom = birdTop + bird.offsetHeight;
-            const groundTop = gameContainer.offsetHeight - ground.offsetHeight;
-            
-            if (birdTop <= 0 || birdBottom >= groundTop) {
-                endGame();
-                return;
-            }
-            
-            if (frames % pipeInterval === 0) {
-                createPipe();
-            }
-            
-            for (let i = 0; i < pipes.length; i++) {
-                let pipe = pipes[i];
-                let pipeLeft = parseInt(pipe.style.left);
-                
-                pipeLeft -= 2;
-                pipe.style.left = pipeLeft + 'px';
-                
-                if (pipeLeft < -60) {
-                    pipe.remove();
-                    pipes.splice(i, 1);
-                    i--;
-                    continue;
-                }
-                
-                if (checkCollision(bird, pipe)) {
-                    endGame();
-                    return;
-                }
-            }
-            
-            for (let i = 0; i < pipePairs.length; i++) {
-                let pair = pipePairs[i];
-                let pipeLeft = parseInt(pair.top.style.left);
-                
-                if (pipeLeft + 60 < 50 && !pair.scored) {
-                    pair.scored = true;
-                    score++;
-                    scoreDisplay.textContent = score;
-                    
-                    if (score % 10 === 0 && pipeInterval > 80) {
-                        pipeInterval -= 2;
-                    }
-                }
-            }
-        }
-
-        // Draw game elements
-        function draw() {
-            // CSS handles most rendering
-        }
-
-        // Create a new pipe
-        function createPipe() {
-            let minPipeHeight = 50;
-            let maxPipeHeight = gameContainer.offsetHeight - pipeGap - 50 - minPipeHeight;
-            
-            let pipeTopHeight = Math.floor(Math.random() * (maxPipeHeight - minPipeHeight)) + minPipeHeight;
-            let pipeBottomHeight = gameContainer.offsetHeight - pipeTopHeight - pipeGap - 50;
-            
-            let topPipe = document.createElement('div');
-            topPipe.className = 'pipe pipe-top';
-            topPipe.style.height = pipeTopHeight + 'px';
-            topPipe.style.left = gameContainer.offsetWidth + 'px';
-            gameContainer.appendChild(topPipe);
-            pipes.push(topPipe);
-            
-            let bottomPipe = document.createElement('div');
-            bottomPipe.className = 'pipe pipe-bottom';
-            bottomPipe.style.height = pipeBottomHeight + 'px';
-            bottomPipe.style.left = gameContainer.offsetWidth + 'px';
-            bottomPipe.style.bottom = '50px';
-            gameContainer.appendChild(bottomPipe);
-            pipes.push(bottomPipe);
-            
-            pipePairs.push({
-                top: topPipe,
-                bottom: bottomPipe,
-                scored: false
-            });
-        }
-
-        // Check collision between bird and pipe
-        function checkCollision(bird, pipe) {
-            let birdRect = bird.getBoundingClientRect();
-            let pipeRect = pipe.getBoundingClientRect();
-            
-            return !(
-                birdRect.right < pipeRect.left + 5 ||
-                birdRect.left > pipeRect.right - 5 ||
-                birdRect.bottom < pipeRect.top + 5 ||
-                birdRect.top > pipeRect.bottom - 5
-            );
-        }
-
-        // End the game
-        function endGame() {
-            gameOver = true;
-            backgroundMusic.pause();
-            
-            let newHighScore = false;
-            if (score > highScore) {
-                highScore = score;
-                newHighScore = true;
-                setCookie('flyingModiHighScore', highScore, 365);
-                updateHighScoreDisplay();
-                
-                gameOverImage.src = 'highscore.png';
-                highScoreSound.currentTime = 0;
-                highScoreSound.play();
-            } else {
-                gameOverImage.src = 'gameover.png';
-                gameOverSound.currentTime = 0;
-                gameOverSound.play();
-            }
-            
-            gameOverScreen.style.display = 'flex';
-            
-            setTimeout(() => {
-                canRestart = true;
-            }, 500);
-        }
-
-        // Restart the game
-        function restartGame() {
-            canRestart = false;
-            
-            gameOverSound.pause();
-            gameOverSound.currentTime = 0;
-            highScoreSound.pause();
-            highScoreSound.currentTime = 0;
-            
-            gameOverScreen.style.display = 'none';
-            
-            pipes.forEach(pipe => pipe.remove());
-            pipes = [];
-            pipePairs = [];
-            
-            score = 0;
-            scoreDisplay.textContent = score;
-            
-            pipeInterval = 110;
-            
-            gameOver = false;
-            frames = 0;
-            
-            bird.style.top = '200px';
-            birdVelocity = 0;
-            
-            const randomMusicFile = getRandomMusic();
-            backgroundMusic.src = randomMusicFile;
-            backgroundMusic.currentTime = 0;
-            backgroundMusic.play();
-            
-            gameLoop();
-        }
-
-        // Initialize the game when page loads
-        window.onload = init;
-    </script>
-</body>
-</html>'./',
-            './index.html',
-            './bg.png',
-            './bird.png',
-            './pipe_up.png',
-            './pipe_down.png',
-            './music1.mp3',
-            './music2.mp3',
-            './music3.mp3',
-            './music4.mp3',
-            './fly.mp3',
-            './gameover.mp3',
-            './highscore.mp3',
-            './gameover.png',
-            './highscore.png',
-            './manifest.json',
-            './sw.js',
-            './icon.png'
-        ];
-
-        // PWA Service Worker Registration
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js')
-                    .then(registration => {
-                        console.log('SW registered: ', registration);
-                    })
-                    .catch(registrationError => {
-                        console.log('SW registration failed: ', registrationError);
-                    });
-            });
-        }
-
-        // PWA Install Prompt
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            installButton.style.display = 'block';
-            
-            installButton.addEventListener('click', () => {
-                installButton.style.display = 'none';
-                deferredPrompt.prompt();
-                deferredPrompt.userChoice.then((choiceResult) => {
-                    if (choiceResult.outcome === 'accepted') {
-                        console.log('User accepted the install prompt');
-                    } else {
-                        console.log('User dismissed the install prompt');
-                    }
-                    deferredPrompt = null;
-                });
-            });
-        });
-
-        // Online/Offline status
-        window.addEventListener('online', updateOnlineStatus);
-        window.addEventListener('offline', updateOnlineStatus);
-
-        function updateOnlineStatus() {
-            isOnline = navigator.onLine;
-            onlineStatus.style.display = 'block';
-            
-            if (isOnline) {
-                onlineStatus.classList.remove('offline');
-                onlineStatus.title = 'Online';
-                
-                // Check for updates when coming online
-                setTimeout(checkForUpdates, 1000);
-            } else {
-                onlineStatus.classList.add('offline');
-                onlineStatus.title = 'Offline';
-            }
-        }
-
-        // Update checker
-        async function checkForUpdates() {
-            if (!isOnline) return;
-            
-            try {
-                const cache = await caches.open('flying-modi-v1');
-                const updatePromises = urlsToCache.map(async (url) => {
-                    try {
-                        const networkResponse = await fetch(url);
-                        const cachedResponse = await cache.match(url);
-                        
-                        if (!cachedResponse) {
-                            await cache.put(url, networkResponse.clone());
-                            return { url, updated: true };
-                        }
-                        
-                        const networkETag = networkResponse.headers.get('ETag');
-                        const cachedETag = cachedResponse.headers.get('ETag');
-                        
-                        if (networkETag !== cachedETag) {
-                            await cache.put(url, networkResponse.clone());
-                            return { url, updated: true };
-                        }
-                        
-                        return { url, updated: false };
-                    } catch (error) {
-                        console.log('Failed to check update for:', url);
-                        return { url, updated: false };
-                    }
-                });
-                
-                const results = await Promise.all(updatePromises);
-                const updatedFiles = results.filter(r => r.updated);
-                
-                if (updatedFiles.length > 0) {
-                    console.log('Updated files:', updatedFiles);
-                    showUpdateNotification();
-                }
-            } catch (error) {
-                console.log('Update check failed:', error);
-            }
-        }
-
-        function showUpdateNotification() {
-            updateAvailable = true;
-            const updateNotify = document.createElement('div');
-            updateNotify.innerHTML = '🔄 Update Available';
-            updateNotify.style.cssText = `
-                position: absolute;
-                top: 60px;
-                right: 20px;
-                background: #f39c12;
-                color: white;
-                padding: 5px 10px;
-                border-radius: 15px;
-                font-size: 12px;
-                cursor: pointer;
-                z-index: 100;
-            `;
-            updateNotify.onclick = () => window.location.reload();
-            gameContainer.appendChild(updateNotify);
-        }
-
-        // Cookie functions for high score storage
-        function setCookie(name, value, days) {
-            let expires = "";
-            if (days) {
-                const date = new Date();
-                date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
-                expires = "; expires=" + date.toUTCString();
-            }
-            document.cookie = name + "=" + (value || "") + expires + "; path=/";
-        }
-
-        function getCookie(name) {
-            const nameEQ = name + "=";
-            const ca = document.cookie.split(';');
-            for(let i = 0; i < ca.length; i++) {
-                let c = ca[i];
-                while (c.charAt(0) === ' ') c = c.substring(1, c.length);
-                if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
-            }
-            return null;
-        }
-
-        // Random music selection
-        function getRandomMusic() {
-            const musicFiles = ['music1.mp3', 'music2.mp3', 'music3.mp3', 'music4.mp3'];
-            const randomIndex = Math.floor(Math.random() * musicFiles.length);
-            return musicFiles[randomIndex];
-        }
-
-        // Asset loading functions
-        async function loadAssets() {
-            totalAssets = assetUrls.length;
-            
-            for (const url of assetUrls) {
-                try {
-                    if (isOnline) {
-                        await loadAssetFromNetwork(url);
-                    } else {
-                        await loadAssetFromCache(url);
-                    }
-                } catch (error) {
-                    // If network fails, try cache
-                    try {
-                        await loadAssetFromCache(url);
-                    } catch (cacheError) {
-                        console.error('Failed to load asset from both network and cache:', url);
-                        assetError(url);
-                    }
-                }
-            }
-        }
-
-        async function loadAssetFromNetwork(url) {
-            return new Promise((resolve, reject) => {
-                if (url.match(/\.(mp3|wav|ogg)$/)) {
-                    // Create a temporary audio element to load and verify the sound
-                    const audio = new Audio();
-                    audio.addEventListener('canplaythrough', () => {
-                        // Once loaded, assign to the correct global audio element
-                        assignAudioToGlobalElement(url, audio.src);
-                        assetLoaded(url);
-                        resolve();
-                    }, { once: true });
-                    
-                    audio.addEventListener('error', (e) => {
-                        console.error('Error loading audio from network:', url, e);
-                        reject();
-                    }, { once: true });
-                    
-                    // Use cache busting to ensure fresh load
-                    audio.src = url + '?t=' + Date.now();
-                } else {
-                    const img = new Image();
-                    img.addEventListener('load', () => {
-                        assetLoaded(url);
-                        resolve();
-                    }, { once: true });
-                    img.addEventListener('error', () => {
-                        console.error('Error loading image from network:', url);
-                        reject();
-                    }, { once: true });
-                    img.src = url + '?t=' + Date.now();
-                }
-            });
-        }
-
-        async function loadAssetFromCache(url) {
-            try {
-                const cache = await caches.open('flying-modi-v1');
-                const response = await cache.match(url);
-                
-                if (response) {
-                    if (url.match(/\.(mp3|wav|ogg)$/)) {
-                        const blob = await response.blob();
-                        const objectUrl = URL.createObjectURL(blob);
-                        
-                        // Create audio element to verify the sound loads from cache
-                        const audio = new Audio();
-                        audio.addEventListener('canplaythrough', () => {
-                            assignAudioToGlobalElement(url, objectUrl);
-                            assetLoaded(url);
-                        }, { once: true });
-                        
-                        audio.addEventListener('error', () => {
-                            console.error('Error loading audio from cache:', url);
-                            assetError(url);
-                        }, { once: true });
-                        
-                        audio.src = objectUrl;
-                    } else {
-                        const blob = await response.blob();
-                        const objectUrl = URL.createObjectURL(blob);
-                        
-                        // For images, update the CSS or element src
-                        if (url.includes('bg.png')) {
-                            gameContainer.style.backgroundImage = `url(${objectUrl})`;
-                        } else if (url.includes('bird.png')) {
-                            bird.style.backgroundImage = `url(${objectUrl})`;
-                        }
-                        // Note: pipe images are handled when pipes are created
-                        // Game over images are handled when game over screen is shown
-                        
-                        assetLoaded(url);
-                    }
-                } else {
-                    assetError(url);
-                }
-            } catch (error) {
-                console.error('Error accessing cache:', error);
-                assetError(url);
-            }
-        }   
-
-        function assignAudioToGlobalElement(url, audioUrl) {
-            if (url.includes('fly.mp3')) {
-                flapSound.src = audioUrl;
-                console.log('Assigned flap sound:', audioUrl);
-            } else if (url.includes('gameover.mp3')) {
-                gameOverSound.src = audioUrl;
-                console.log('Assigned gameover sound:', audioUrl);
-            } else if (url.includes('highscore.mp3')) {
-                highScoreSound.src = audioUrl;
-                console.log('Assigned highscore sound:', audioUrl);
-            } else if (url.includes('music')) {
-                // Music files are handled separately via getRandomMusic()
-                console.log('Loaded music file:', url);
-            }
-        }
-
-        function assetLoaded(url) {
-            assetsLoaded++;
-            const progress = Math.round((assetsLoaded / totalAssets) * 100);
-            loadingBar.style.width = `${progress}%`;
-            loadingText.textContent = `${progress}%`;
-            loadingDetails.textContent = `Loaded: ${assetNames[url]}`;
-            
-            if (assetsLoaded === totalAssets) {
-                loadingComplete = true;
-                setTimeout(showGame, 1000);
-            }
-        }
-
-        function assetError(url) {
-            console.error(`Failed to load asset: ${url}`);
-            assetsLoaded++;
-            const progress = Math.round((assetsLoaded / totalAssets) * 100);
-            loadingBar.style.width = `${progress}%`;
-            loadingText.textContent = `${progress}%`;
-            loadingDetails.textContent = `Error loading: ${assetNames[url]}`;
-            
-            if (assetsLoaded === totalAssets) {
-                loadingComplete = true;
-                setTimeout(showGame, 1000);
-            }
-        }
-
-        function showGame() {
-            loadingScreen.style.opacity = '0';
-            setTimeout(() => {
-                loadingScreen.style.display = 'none';
-                gameContainer.style.display = 'block';
-                updateOnlineStatus();
-            }, 500);
-        }
-
-        // Initialize game
-        function init() {
-            const savedHighScore = getCookie('flyingModiHighScore');
-            if (savedHighScore !== null) {
-                highScore = parseInt(savedHighScore);
-                updateHighScoreDisplay();
-            }
-            
-            bird.style.left = '50px';
-            bird.style.top = '200px';
-            
-            startButton.addEventListener('click', startGame);
-            gameContainer.addEventListener('click', handleJump);
-            document.addEventListener('keydown', function(e) {
-                if (e.code === 'Space') {
-                    handleJump();
-                }
-            });
-            
-            gameContainer.addEventListener('touchstart', handleJump);
-            gameOverScreen.addEventListener('click', handleRestart);
-            
-            loadAssets();
-        }
-
-        // Update high score display
-        function updateHighScoreDisplay() {
-            let medalClass = "";
-            if (highScore >= 50) {
-                medalClass = "gold";
-            } else if (highScore >= 25) {
-                medalClass = "silver";
-            } else if (highScore >= 10) {
-                medalClass = "bronze";
-            }
-            
-            highScoreDisplay.innerHTML = `High Score: ${highScore}`;
-            if (medalClass) {
-                highScoreDisplay.innerHTML += ` <span class="medal ${medalClass}">★</span>`;
-            }
-        }
-
-        // Start the game
-        function startGame() {
-            if (gameStarted) return;
-            
-            gameStarted = true;
-            gameOver = false;
-            score = 0;
-            frames = 0;
-            pipes = [];
-            pipePairs = [];
-            
-            bird.style.top = '200px';
-            birdVelocity = 0;
-            
-            scoreDisplay.textContent = score;
-            gameMessage.style.display = 'none';
-            
-            const randomMusicFile = getRandomMusic();
-            backgroundMusic.src = randomMusicFile;
-            backgroundMusic.currentTime = 0;
-            backgroundMusic.play();
-            
-            gameLoop();
-        }
-
-        // Handle bird jump
-        function handleJump() {
             if (!gameStarted) {
                 startGame();
                 return;
@@ -1757,4 +1234,3 @@
     </script>
 </body>
 </html>
-

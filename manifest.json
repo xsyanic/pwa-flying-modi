@@ -1,7 +1,7 @@
 {
-  "name": "Flying Modi",
-  "short_name": "Flying Modi",
-  "description": "Flappy Bird Clone, But It's Modi ji (by @xsyanic on GitHub)",
+  "name": "Flying Modi V2",
+  "short_name": "Flying Modi V2",
+  "description": "Flappy Bird, But it's Modi ji - by @xsyanic (Github) / @syanicbhaii (Instagram)",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#87CEEB",
